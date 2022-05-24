@@ -10,8 +10,8 @@ source('scripts/functions.R')
 
 # Import data -------------------------------------------------------------
 # import simulated training and test data objects
-train_obj <- readRDS("data/simulated_data/case4_train.RData")
-test_obj <- readRDS("data/simulated_data/case4_test.RData")
+train_obj <- readRDS("data/simulated_data/case6_train.RData")
+test_obj <- readRDS("data/simulated_data/case6_test.RData")
 
 # extract training data, training extended data, test data, test extended data and true mixed effect
 # train
@@ -347,7 +347,7 @@ T2r1c1 %>%
 d_cov %>%
   knitr::kable(caption = "Estimated G and R and (SEs in parentheses) for toy example over 100 runs")
 
-writexl::write_xlsx(d_cov, "data/simulated_data/case4_cov_full.xlsx")
+writexl::write_xlsx(d_cov, "data/simulated_data/case6_cov_full.xlsx")
 
 # Table 2 Estimated G and R for toy example row 1------------------------------------------------
 
@@ -382,7 +382,7 @@ dats %>%
   rownames_to_column()
 
 d_mse %>%
-  knitr::kable(caption = "Summary of MSPE simulation results for prediction of mixed effect for Case 1")
+  knitr::kable(caption = "Summary of MSPE simulation results for prediction of mixed effect for case6")
 
-writexl::write_xlsx(d_mse, "data/simulated_data/case4_mse_full.xlsx")
+writexl::write_xlsx(d_mse, "data/simulated_data/case6_mse_full.xlsx")
 

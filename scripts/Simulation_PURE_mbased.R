@@ -1,5 +1,6 @@
 rm(list = ls())
 library(mgcv)
+library(mclust)
 library(purrr)
 library(MASS)
 library(lme4)
@@ -7,7 +8,6 @@ library(tidyverse)
 library(randomForestSRC)
 library(caret)
 library(xgboost)
-library(mclust)
 source('scripts/functions.R')
 # Import data -------------------------------------------------------------
 # import simulated training and test data objects
@@ -55,7 +55,7 @@ for (i in 1:100){
 }
 
 lapply(out,table) 
-sum(unlist(map(lapply(out1,table), length))==1)
+sum(unlist(map(lapply(out,table), length))==1)
 # the majority are outside of the GIVH
 
 ################## Step 2 #########################################
@@ -194,9 +194,9 @@ lmer_predicted <-
          as_tibble() %>%
          mutate(index = rep(1: (dim(test.ext[[1]])[1]/nn), each = nn))) %>%
   purrr::map(~.x %>%
-        group_by(index) %>%
-        summarise_all(mean) %>%
-        select("value"))
+               group_by(index) %>%
+               summarise_all(mean) %>%
+               select("value"))
 
 mse.lmermin <-
   map2(lmer_predicted, true_theta,
@@ -206,7 +206,7 @@ mse.lmermin <-
 VarDR <- 
   objs %>%
   purrr::map( ~ tibble(VarD =  as.data.frame(VarCorr(.x))[1,4],
-                VarR =  as.data.frame(VarCorr(.x))[2,4])) %>%
+                       VarR =  as.data.frame(VarCorr(.x))[2,4])) %>%
   bind_rows()
 
 T2r2c1 <-
@@ -235,9 +235,9 @@ lm_predicted <-
          as_tibble() %>%
          mutate(index = rep(1: (dim(test.ext[[1]])[1]/nn), each = nn))) %>%
   purrr::map(~.x %>%
-        group_by(index) %>%
-        summarise_all(mean) %>%
-        select("value"))
+               group_by(index) %>%
+               summarise_all(mean) %>%
+               select("value"))
 
 mse.rpmin <-
   map2(lm_predicted, true_theta,
@@ -257,9 +257,9 @@ rf_predicted <-
          as_tibble() %>%
          mutate(index = rep(1: (dim(test.ext[[1]])[1]/nn), each = nn))) %>%
   purrr::map(~.x %>%
-        group_by(index) %>%
-        summarise_all(mean) %>%
-        select("value"))
+               group_by(index) %>%
+               summarise_all(mean) %>%
+               select("value"))
 
 mse.rfmin  <-
   map2(rf_predicted, true_theta,
@@ -282,19 +282,15 @@ xgb_predicted <-
          as_tibble() %>%
          mutate(index = rep(1: (dim(test.ext[[1]])[1]/nn), each = nn))) %>%
   purrr::map(~.x %>%
-        group_by(index) %>%
-        summarise_all(mean) %>%
-        select("value"))
+               group_by(index) %>%
+               summarise_all(mean) %>%
+               select("value"))
 
 mse.boostmin   <-
   map2(xgb_predicted, true_theta,
        ~ mean((.x$value -.y)^2)) %>%
   unlist()
 
-round(mean(mse.boostmin), 2)
-#  351.63
-round(sd(mse.boostmin), 2)
-# 326.33
 
 # boosting -------------------------------------
 
@@ -308,10 +304,23 @@ train_minority_regroup <- train_minority
 
 # regroup new id is based on the distribution of y 
 kk <- 30 # n # force m not change
-newids <- 
-  train_minority_regroup %>%
-  purrr::map( ~ hclust(dist(.x$y),"ave")  %>%
-                cutree(., kk))
+# newids <- 
+#   train_minority_regroup %>%
+#   purrr::map( ~ hclust(dist(.x$y),"ave")  %>%
+#                 cutree(., kk))
+
+
+newids <- list()
+for (i in 1:100){
+  trainXZ <- train_minority_regroup[[i]][ ,c("X.2", "X.3","X.4", "X.5", "X.6")]
+  mcfit <- Mclust(trainXZ, G = 30)
+  newids[[i]]<- mcfit$classification
+}
+
+
+
+#####
+
 
 # assign the new id to training data
 train_minority_regroup  <- 
@@ -355,7 +364,7 @@ mse.lmer.rg <-
 VarDR.frg <- 
   objs_frg %>%
   purrr::map( ~ tibble(VarD =  as.data.frame(VarCorr(.x))[1,4],
-                VarR =  as.data.frame(VarCorr(.x))[2,4])) %>%
+                       VarR =  as.data.frame(VarCorr(.x))[2,4])) %>%
   bind_rows()
 
 
@@ -376,13 +385,12 @@ T2r2c2
 
 # Table 2 Estimated G and R for toy example row 2------------------------------------------------
 d_cov <- 
-T2r2c1 %>%
+  T2r2c1 %>%
   left_join(T2r2c2, c("Train with minority data" = "Train with minority data")) 
 
 d_cov %>%
   knitr::kable(caption = "Estimated G and R and (SEs in parentheses) for toy example over 100 runs")
-
-#writexl::write_xlsx(d_cov, "data/simulated_data/case1_cov_min.xlsx")
+writexl::write_xlsx(d_cov, "data/simulated_data/m_based/case1_cov_min_mbased.xlsx")
 
 # Table 2 Estimated G and R for toy example row 2------------------------------------------------
 
@@ -390,14 +398,14 @@ d_cov %>%
 ###################### Table Results Entries ########################################
 # second row of Table - rp, cmmp and lmer- minority data
 dats <- 
-list(mse.rpmin, mse.rfmin, mse.boostmin, mse.cmmpmin, mse.lmermin, mse.lmer.rg,mse.cmmp.rg) %>%
+  list(mse.rpmin, mse.rfmin, mse.boostmin, mse.cmmpmin, mse.lmermin, mse.lmer.rg,mse.cmmp.rg) %>%
   setNames(c("RP", "Random Forest", "Boosted Reg Tree", "CMMP", "Lmer*", "Regrouped Lmer*","PURE"))
 
 d_mse <-
-dats %>%
+  dats %>%
   purrr::imap(~ .x %>%
-               as_tibble() %>%
-               summarise(mean = round(mean(value), 2) , sd = mean(sd(value)/10, 2)) %>%
+                as_tibble() %>%
+                summarise(mean = round(mean(value), 2) , sd = mean(sd(value)/10, 2)) %>%
                 mutate(method = .y)) %>%
   bind_rows() %>%
   mutate("Train with minority data (n = 120)" = mean,
@@ -413,5 +421,5 @@ dats %>%
 d_mse %>%
   knitr::kable(caption = "Summary of MSPE simulation results for prediction of mixed effect for case1")
 
-#writexl::write_xlsx(d_mse, "data/simulated_data/case1_mse_min.xlsx")
+writexl::write_xlsx(d_mse, "data/simulated_data/m_based/case1_mse_min_mbased.xlsx")
 
