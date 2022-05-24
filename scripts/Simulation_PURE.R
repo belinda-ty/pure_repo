@@ -1,11 +1,17 @@
 rm(list = ls())
 library(mgcv)
 library(purrr)
-source('Scripts/PURE_2022/functions.R')
+library(MASS)
+library(lme4)
+library(tidyverse)
+library(randomForestSRC)
+library(caret)
+library(xgboost)
+source('scripts/functions.R')
 # Import data -------------------------------------------------------------
 # import simulated training and test data objects
-train_obj <- readRDS("Data/simulated_data/Case1_train.RData")
-test_obj <- readRDS("Data/simulated_data/Case1_test.RData")
+train_obj <- readRDS("Data/simulated_data/case5_train.RData")
+test_obj <- readRDS("Data/simulated_data/case5_test.RData")
 
 # extract training data, training extended data, test data, test extended data and true mixed effect
 # train
@@ -240,6 +246,7 @@ mse.rpmin <-
 # linear model -------------------------------------
 
 # random forest -------------------------------------
+set.seed(100)
 rf_objs <-
   train_minority %>%
   purrr::map( ~ rfsrc(y ~ X.1 + X.2 + X.3 + X.4 + X.5 + X.6 - 1,data = .x, importance = FALSE, proximity = TRUE))
@@ -374,7 +381,7 @@ T2r2c1 %>%
 
 d_cov %>%
   knitr::kable(caption = "Estimated G and R and (SEs in parentheses) for toy example over 100 runs")
-writexl::write_xlsx(d_cov, "Data/simulated_data/case1_cov_min.xlsx")
+writexl::write_xlsx(d_cov, "data/simulated_data/case5_cov_min.xlsx")
 
 # Table 2 Estimated G and R for toy example row 2------------------------------------------------
 
@@ -394,16 +401,16 @@ dats %>%
   bind_rows() %>%
   mutate("Train with minority data (n = 120)" = mean,
          "SE" = paste0("(", round(sd, 2), ")")) %>%
-  mutate(RP_baseline = 759.3249)%>%
-  mutate("% Decrease relative to RP full" = round((RP_baseline - mean)/RP_baseline*100, 2))%>%
-  select(method, "Train with minority data (n = 120)",SE, "% Decrease relative to RP full") %>%
+  mutate(RP_baseline = mean(mse.rpmin))%>%
+  mutate("% Decrease relative to RP" = round((RP_baseline - mean)/RP_baseline*100, 2))%>%
+  select(method, "Train with minority data (n = 120)",SE, "% Decrease relative to RP") %>%
   column_to_rownames(var = "method")%>%
   t()%>%
   as.data.frame() %>%
   rownames_to_column()
 
 d_mse %>%
-  knitr::kable(caption = "Summary of MSPE simulation results for prediction of mixed effect for Case 1")
+  knitr::kable(caption = "Summary of MSPE simulation results for prediction of mixed effect for case5")
 
-# writexl::write_xlsx(d_mse, "Data/simulated_data/case1_mse_min.xlsx")
+writexl::write_xlsx(d_mse, "data/simulated_data/case5_mse_min.xlsx")
 

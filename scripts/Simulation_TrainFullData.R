@@ -3,14 +3,15 @@ library(MASS)
 library(lme4)
 library(tidyverse)
 library(randomForestSRC)
+library(purrr)
 library(caret)
 library(xgboost)
-source('Scripts/PURE_2022/functions.R')
+source('scripts/functions.R')
 
 # Import data -------------------------------------------------------------
 # import simulated training and test data objects
-train_obj <- readRDS("Data/simulated_data/Case1_train.RData")
-test_obj <- readRDS("Data/simulated_data/Case1_test.RData")
+train_obj <- readRDS("data/simulated_data/case4_train.RData")
+test_obj <- readRDS("data/simulated_data/case4_test.RData")
 
 # extract training data, training extended data, test data, test extended data and true mixed effect
 # train
@@ -43,12 +44,12 @@ sd(tscore)
 # training data model
 objs <- 
   train %>%
-  map( ~ lmer(y ~ X.1 + X.2 + X.3 + X.4 + X.5 + X.6-1 + (Z-1 | id), data = .x, REML = TRUE)) 
+  purrr::map( ~ lmer(y ~ X.1 + X.2 + X.3 + X.4 + X.5 + X.6-1 + (Z-1 | id), data = .x, REML = TRUE)) 
 
 # test data group mean
 test_mean <-
   test.ext %>%
-  map( ~ group_mean(data = .x, nn = 5))
+  purrr::map( ~ group_mean(data = .x, nn = 5))
 
 # obtain CMMP estimator 
 cmmp_estimator <-
@@ -70,7 +71,7 @@ lmer_predicted <-
        ~ predict(.x, newdata = .y) %>%
          as_tibble() %>%
          mutate(index = rep(1: (dim(test.ext[[1]])[1]/nn), each = nn))) %>%
-  map(~.x %>%
+  purrr::map(~.x %>%
         group_by(index) %>%
         summarise_all(mean) %>%
         select("value"))
@@ -86,16 +87,16 @@ mse.lmer <-
 # training extended model
 objs_ex <- 
   train_ex %>%
-  map( ~ lmer(y ~ X.1+X.2+X.3+X.4+X.5+X.6+X.7+X.8+X.9+X.10+X.11-1 + (Z-1 | id), data = .x, REML = TRUE)) 
+  purrr::map( ~ lmer(y ~ X.1+X.2+X.3+X.4+X.5+X.6+X.7+X.8+X.9+X.10+X.11-1 + (Z-1 | id), data = .x, REML = TRUE)) 
 
 # test data group mean
 test_mean_exl <-
   test_extend1 %>%
-  map( ~ group_mean(data = .x, nn = 5))
+  purrr::map( ~ group_mean(data = .x, nn = 5))
 
 test_mean_exr <-
   test_extend2 %>%
-  map( ~ group_mean(data = .x, nn = 5))
+  purrr::map( ~ group_mean(data = .x, nn = 5))
 
 # obtain CMMP estimator for two test data 
 cmmp_estimator_exl <-
@@ -124,7 +125,7 @@ lmer_predicted_exl <-
        ~ predict(.x, newdata = .y) %>%
          as_tibble() %>%
          mutate(index = rep(1: (dim(test_mean_exl[[1]])[1]/nn), each = nn))) %>%
-  map(~.x %>%
+  purrr::map(~.x %>%
         group_by(index) %>%
         summarise_all(mean) %>%
         select("value"))
@@ -140,7 +141,7 @@ lmer_predicted_exr <-
        ~ predict(.x, newdata = .y) %>%
          as_tibble() %>%
          mutate(index = rep(1: (dim(test_mean_exr[[1]])[1]/nn), each = nn))) %>%
-  map(~.x %>%
+  purrr::map(~.x %>%
         group_by(index) %>%
         summarise_all(mean) %>%
         select("value"))
@@ -155,14 +156,14 @@ mse.lmer.exr <-
 # least square estimator 
 lm_objs <- 
   train %>%
-  map( ~ lm(y ~ X.1 + X.2 + X.3 + X.4 + X.5 + X.6 - 1 , data = .x)) 
+  purrr::map( ~ lm(y ~ X.1 + X.2 + X.3 + X.4 + X.5 + X.6 - 1 , data = .x)) 
 
 lm_predicted <-
   map2(lm_objs, test.ext, 
        ~ predict(.x, newdata = .y) %>%
          as_tibble() %>%
          mutate(index = rep(1: (dim(test.ext[[1]])[1]/nn), each = nn))) %>%
-  map(~.x %>%
+  purrr::map(~.x %>%
         group_by(index) %>%
         summarise_all(mean) %>%
         select("value"))
@@ -176,16 +177,17 @@ mse.rp  <-
 # linear model -------------------------------------
 
 # random forest -------------------------------------
+set.seed(100)
 rf_objs <- 
   train %>%
-  map( ~ rfsrc(y ~ X.1 + X.2 + X.3 + X.4 + X.5 + X.6 - 1,data = .x, importance = FALSE, proximity = TRUE))
+  purrr::map( ~ rfsrc(y ~ X.1 + X.2 + X.3 + X.4 + X.5 + X.6 - 1,data = .x, importance = FALSE, proximity = TRUE))
 
 rf_predicted <-
   map2(rf_objs, test.ext, 
        ~ randomForestSRC::predict.rfsrc(.x, .y)$predicted %>%
          as_tibble() %>%
          mutate(index = rep(1: (dim(test.ext[[1]])[1]/nn), each = nn))) %>%
-  map(~.x %>%
+  purrr::map(~.x %>%
         group_by(index) %>%
         summarise_all(mean) %>%
         select("value"))
@@ -198,9 +200,10 @@ mse.rf  <-
 # random forest -------------------------------------
 
 # boosting-------------------------------------
+set.seed(100)
 xgb_objs <- 
   train %>%
-  map( ~ train(
+  purrr::map( ~ train(
     y ~ X.1 + X.2 + X.3 + X.4 + X.5 + X.6 -1, data = .x, method = "xgbTree",
     trControl = trainControl("cv", number = 10)))
 
@@ -209,7 +212,7 @@ xgb_predicted <-
        ~ predict(.x, .y) %>%
          as_tibble() %>%
          mutate(index = rep(1: (dim(test.ext[[1]])[1]/nn), each = nn))) %>%
-  map(~.x %>%
+  purrr::map(~.x %>%
         group_by(index) %>%
         summarise_all(mean) %>%
         select("value"))
@@ -234,7 +237,7 @@ train_regroup <- train
 kk <- 30
 newids <- 
 train_regroup %>%
-  map(~hclust(dist(.x$y),"ave") %>%
+  purrr::map(~hclust(dist(.x$y),"ave") %>%
         cutree(., kk))
 
 # assign the new id to training data
@@ -246,12 +249,12 @@ train_regroup %>%
 # training data model
 objs_frg <- 
   train_regroup %>%
-  map( ~ lmer( y ~ X.1 + X.2 + X.3 + X.4 + X.5 + X.6 - 1 + (Z-1 | id), data = .x, REML = TRUE))
+  purrr::map( ~ lmer( y ~ X.1 + X.2 + X.3 + X.4 + X.5 + X.6 - 1 + (Z-1 | id), data = .x, REML = TRUE))
 
 # test data group mean
 test_mean <-
   test.ext %>%
-  map( ~ group_mean(data = .x, nn = 5))
+  purrr::map( ~ group_mean(data = .x, nn = 5))
 
 # obtain CMMP estimator 
 cmmp_estimator <-
@@ -280,7 +283,7 @@ mse.lmer.frg <-
 # rp regroup------------------------------------------------
 ls_objs_frg <- 
   train_regroup %>%
-  map( ~ lm( y ~ X.1 + X.2 + X.3 + X.4 + X.5 + X.6 - 1 , data = .x))
+  purrr::map( ~ lm( y ~ X.1 + X.2 + X.3 + X.4 + X.5 + X.6 - 1 , data = .x))
 
 ls.frg <-
   ls_objs_frg %>%
@@ -296,14 +299,14 @@ mse.rp.frg <-
 # obtain estimator of the random intercept variance VarD, and estimator of the residual variance VarR
 VarDR <- 
   objs %>%
-  map( ~ tibble(VarD =  as.data.frame(VarCorr(.x))[1,4],
+  purrr::map( ~ tibble(VarD =  as.data.frame(VarCorr(.x))[1,4],
                 VarR =  as.data.frame(VarCorr(.x))[2,4])) %>%
   bind_rows()
 
 # obtain estimator of the random intercept variance VarD, and estimator of the residual variance VarR
 VarDR.frg <- 
   objs_frg %>%
-  map( ~ tibble(VarD =  as.data.frame(VarCorr(.x))[1,4],
+  purrr::map( ~ tibble(VarD =  as.data.frame(VarCorr(.x))[1,4],
                 VarR =  as.data.frame(VarCorr(.x))[2,4])) %>%
   bind_rows()
 
@@ -344,7 +347,7 @@ T2r1c1 %>%
 d_cov %>%
   knitr::kable(caption = "Estimated G and R and (SEs in parentheses) for toy example over 100 runs")
 
-#writexl::write_xlsx(d_cov, "Data/simulated_data/case1_cov_full.xlsx")
+writexl::write_xlsx(d_cov, "data/simulated_data/case4_cov_full.xlsx")
 
 # Table 2 Estimated G and R for toy example row 1------------------------------------------------
 
@@ -370,9 +373,9 @@ dats %>%
   bind_rows() %>%
   mutate("Train with full data (n = 200)" = mean,
          "SE" = paste0("(", round(sd, 2), ")")) %>%
-  mutate(RP_baseline = 759.3249)%>%
-  mutate("% Decrease relative to RP full" = round((RP_baseline - mean)/RP_baseline*100, 2))%>%
-  select(method, "Train with full data (n = 200)",SE, "% Decrease relative to RP full") %>%
+  mutate(RP_baseline = mean(mse.rp))%>%
+  mutate("% Decrease relative to RP" = round((RP_baseline - mean)/RP_baseline*100, 2))%>%
+  select(method, "Train with full data (n = 200)",SE, "% Decrease relative to RP") %>%
   column_to_rownames(var = "method") %>%
   t() %>%
   as.data.frame() %>%
@@ -381,5 +384,5 @@ dats %>%
 d_mse %>%
   knitr::kable(caption = "Summary of MSPE simulation results for prediction of mixed effect for Case 1")
 
-#writexl::write_xlsx(d_mse, "Data/simulated_data/case1_mse_full.xlsx")
+writexl::write_xlsx(d_mse, "data/simulated_data/case4_mse_full.xlsx")
 
