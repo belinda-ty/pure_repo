@@ -11,8 +11,8 @@ library(xgboost)
 source('scripts/functions.R')
 # Import data -------------------------------------------------------------
 # import simulated training and test data objects
-train_obj <- readRDS("Data/simulated_data/case1_train.RData")
-test_obj <- readRDS("Data/simulated_data/case1_test.RData")
+train_obj <- readRDS("Data/simulated_data/case3_train.RData")
+test_obj <- readRDS("Data/simulated_data/case3_test.RData")
 
 # extract training data, training extended data, test data, test extended data and true mixed effect
 # train
@@ -390,7 +390,7 @@ d_cov <-
 
 d_cov %>%
   knitr::kable(caption = "Estimated G and R and (SEs in parentheses) for toy example over 100 runs")
-writexl::write_xlsx(d_cov, "data/simulated_data/m_based/case1_cov_min_mbased.xlsx")
+writexl::write_xlsx(d_cov, "data/simulated_data/m_based/case3_cov_min_mbased.xlsx")
 
 # Table 2 Estimated G and R for toy example row 2------------------------------------------------
 
@@ -419,7 +419,7 @@ d_mse <-
   rownames_to_column()
 
 d_mse %>%
-  knitr::kable(caption = "Summary of MSPE simulation results for prediction of mixed effect for case1")
+  knitr::kable(caption = "Summary of MSPE simulation results for prediction of mixed effect for case3")
 
-writexl::write_xlsx(d_mse, "data/simulated_data/m_based/case1_mse_min_mbased.xlsx")
+writexl::write_xlsx(d_mse, "data/simulated_data/m_based/case3_mse_min_mbased.xlsx")
 
