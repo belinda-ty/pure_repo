@@ -185,5 +185,21 @@ estimateK <- function(y , m , K , C = 50,  method=c("vote","ave")){
   return(k)
 }
 
+
+cmmp.theta <- function(mu.n, raneff,y){
+  theta.cmmp <- theta.ls <- stage.cmmp <- c()	
+  N = length(mu.n)
+  for (i in 1: N){
+    mu.est <- mu.n[i]
+    # CMMP 	
+    theta.temp <- mu.est + raneff
+    sp.temp <- theta.temp^2-2*theta.temp*y[i]
+    I.temp <- match(min(sp.temp),sp.temp)
+    theta.cmmp[i] <- theta.temp[I.temp]
+    stage.cmmp[i] <- I.temp
+  }
+  return(theta.cmmp)
+}
+
 ########## some necessary functions end ############
 ####################################################

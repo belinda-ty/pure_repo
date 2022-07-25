@@ -1,0 +1,60 @@
+ *******************************************************************************************************
+ * This is a sample program which may be used to read the NLMS public-use file,Version 5.              *
+ * This sample program can be used for reading any of files. Its important to note that urban and      *
+ * smsast variables are not on the tobacco use file. Also the tobacco use variables: smoke100, agesmk  *
+ * smokstat,smokhome, curruse and everuse are on the tobacco use (tu) file only.                       *
+ * FILE= The NLMS public file that you are reading.
+ *******************************************************************************************************;
+
+   filename in "FILE" lrecl=90;  /*SAS input file reference*/
+
+   data YOUR DATASET NAME;
+
+     infile in missover;              
+     input                 
+    @1 record     $   7.     /*Record Number (page no. 6)                              */
+    @8 age            2.     /*Age at Time of Interview (page no. 10)                  */
+    @10 race      $   1.     /*Race  (page no.12)                                      */
+    @11 sex       $   1.     /*Sex   (page no.10)                                      */
+    @12 ms        $   1.     /*Marital Status (page no.13)                             */
+    @13 hisp      $   1.     /*Hispanic Origin (page no. 12)                           */
+    @14 adjinc    $   2.     /*Inflation Adjusted Income (page no.20)                  */
+    @16 educ      $   2.     /*Highest Grade Completed (page no.14)                    */
+    @18 pob       $   3.     /*Region of Birth (page no. 11)                           */
+    @21 wt            4.     /*Adjusted Weight (page no. 6 )                           */
+    @25 hhid      $   7.     /*Household ID No. (page no. 6)                           */
+    @32 hhnum         2.     /*Number of People in HH (page no. 14)                    */
+    @34 reltrf    $   1.     /*Relationship to Reference Person (page no.13)           */
+    @35 occ       $   4.     /*4 Digit Occupation Code (page no. 18)                   */
+    @39 majocc    $   2.     /*Major Occupation Code (page no. 18 )                    */
+    @41 ind       $   4.     /*4 Digit Industry Code (page no. 17)                     */
+    @45 majind    $   2.     /*Major Industry Code (page no. 18)                       */
+    @47 esr       $   1.     /*Employment Status Recode (page no. 17)                  */
+    @48 urban     $   1.     /*Urban/Rural Status (page no. 8)                         */
+    @49 smsast    $   1.     /*SMSAST Status (page no.9)                               */
+    @50 inddea    $   1.     /*Death Indicator (page no. 23)                           */
+    @51 cause113  $   3.     /*Cause of Death (page no. 23)                            */
+    @54 follow        4.     /*Length of Follow-up (page no. 24)                       */
+    @58 dayod     $   1.     /*Day of Week of Death (page no. 24)                      */
+    @59 hosp      $   1.     /*Hospital Type (page no.25)                              */
+    @60 hospd     $   1.     /*Hospital Death Indicator (page no. 26)                  */
+    @61 ssnyn     $   1.     /*Presence of SSN (page no. 7)                            */
+    @62 vt        $   1.     /*Veteran Status (page no. 16)                            */
+    @63 histatus  $   1.     /*Health Insurance Status (page no. 22)                   */
+    @64 hitype    $   1.     /*Health Insurance Type (page no. 22)                     */
+    @65 povpct    $   2.     /*Income as Percent of Poverty Level (page no. 21)        */
+    @67 stater    $   2.     /*State Recode (page no. 8)                               */
+    @69 rcow      $   2.     /*Recoded Class of Worker (page no.19)                    */
+    @71 tenure    $   1.     /*Housing Tenure (page no. 14)                            */
+    @72 citizen   $   1.     /*Citizenship (page no. 16)                               */
+    @73 health    $   2.     /*Health (page no. 16)                                    */
+    @75 indalg        1.     /*Indicator of Algorithmic Death (page no. 27)            */
+    @76 smok100   $   1.     /*Smoked More than 100 Cigarettes (page no. 28)           */
+    @77 agesmk    $   2.     /*Age Started Smoking (page no. 28)                       */
+    @79 smokstat  $   1.     /*Cigarette Smoking Status (page no.28)                   */
+    @80 smokhome  $   1.     /*Rules for Smoking Cigarettes in the Home (page no. 29 ) */
+    @81 curruse   $   5.     /*Currently Use Smokeless Tobacco (page no. 30)           */
+    @86 everuse   $   5.     /*Ever Use Smokeless Tobacco (page no. 31)                */
+
+    ;
+   run;

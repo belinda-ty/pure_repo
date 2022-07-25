@@ -1,3 +1,4 @@
+# Step 4   Regrouping of the minority training uses model based clustering algorithm
 rm(list = ls())
 library(mgcv)
 library(mclust)
@@ -9,6 +10,7 @@ library(randomForestSRC)
 library(caret)
 library(xgboost)
 source('scripts/functions.R')
+
 # Import data -------------------------------------------------------------
 # import simulated training and test data objects
 train_obj <- readRDS("Data/simulated_data/case3_train.RData")
@@ -390,7 +392,7 @@ d_cov <-
 
 d_cov %>%
   knitr::kable(caption = "Estimated G and R and (SEs in parentheses) for toy example over 100 runs")
-writexl::write_xlsx(d_cov, "data/simulated_data/m_based/case3_cov_min_mbased.xlsx")
+writexl::write_xlsx(d_cov, "data/simulated_data/m_based/case3_cov_min_.xlsx")
 
 # Table 2 Estimated G and R for toy example row 2------------------------------------------------
 
